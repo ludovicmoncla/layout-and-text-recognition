@@ -1,46 +1,80 @@
 import numpy as np
 from lxml import etree
+import cv2
+import matplotlib.pyplot as plt
 
 def sort_blocks_two_columns(text_blocks):
     """
-    Sort text blocks from a two-column document into logical reading order.
+    Sort text blocks from a two-column document into reading order:
+    1. Entire left column (top to bottom)
+    2. Entire right column (top to bottom)
 
-    Sorting strategy:
-        1. Compute the median X position to determine column separation.
-        2. Assign each block to the left or right column based on its center X.
-        3. Sort each column from top to bottom (by y1).
-        4. Merge results: left column first, then right column.
+    The function:
+        - finds a horizontal split between the two columns based on the largest
+          gap between block centers along the x-axis,
+        - assigns blocks to left/right columns using that split,
+        - sorts each column by the top coordinate (y1).
 
     Args:
         text_blocks (list[dict]): List of block dictionaries
                                   {"box": (x1, y1, x2, y2)}.
 
     Returns:
-        list[dict]: Blocks reordered according to natural reading order.
+        list[dict]: Blocks reordered according to the desired reading order.
     """
     if not text_blocks:
         return []
 
-    # Calculer la médiane X
-    mid_x = np.median([(b["box"][0] + b["box"][2]) / 2 for b in text_blocks])
-
-    left_col, right_col = [], []
-
+    # 1) Compute x centers for all blocks
+    centers = []
     for b in text_blocks:
         x1, y1, x2, y2 = b["box"]
-        center_x = (x1 + x2) / 2
+        cx = (x1 + x2) / 2.0
+        centers.append((cx, b))
 
-        if center_x < mid_x:
+    # 2) Sort by x center
+    centers.sort(key=lambda cb: cb[0])  # (center_x, block)
+
+    # 3) Find largest gap between consecutive centers (column gutter)
+    x_values = [cb[0] for cb in centers]
+    gaps = [x_values[i+1] - x_values[i] for i in range(len(x_values) - 1)]
+
+    # If for some reason there is only one block, just return it
+    if not gaps:
+        return [b for _, b in centers]
+
+    max_gap_idx = int(np.argmax(gaps))
+    # Boundary is mid-point of the largest gap
+    boundary_x = (x_values[max_gap_idx] + x_values[max_gap_idx + 1]) / 2.0
+
+    # 4) Assign to left / right columns based on this boundary
+    left_col = []
+    right_col = []
+
+    for cx, b in centers:
+        if cx < boundary_x:
             left_col.append(b)
         else:
             right_col.append(b)
 
-    # Trier chaque colonne par Y
+    # 5) Sort each column by y1 (top to bottom)
     left_sorted = sorted(left_col, key=lambda b: b["box"][1])
     right_sorted = sorted(right_col, key=lambda b: b["box"][1])
 
-    # Fusion
+    # 6) Reading order: entire left column, then entire right column
     return left_sorted + right_sorted
+
+
+def display_layout(det_result, line_width=10, font_size=50, figsize=(16, 16)):
+    img_rgb = cv2.cvtColor(det_result.plot(pil=True, line_width=line_width, font_size=font_size), cv2.COLOR_BGR2RGB)
+    plt.figure(figsize=figsize)
+    plt.imshow(img_rgb)
+    plt.axis('off')
+    plt.show()
+
+
+def save_layout(annotated_frame, output_path):
+    cv2.imwrite(output_path, annotated_frame)
 
 
 def ocr_texts_to_tei(ocr_texts):
@@ -63,9 +97,22 @@ def ocr_texts_to_tei(ocr_texts):
         div = etree.SubElement(body, "div")
 
         content_lines = content.split("\n")
+
+        first = True
         for line_text in content_lines:
-            lb = etree.SubElement(div, "lb")
-            lb.tail = " " + " ".join(line_text) if line_text else ""
+            line_text = line_text.replace("\n", "").strip()
+
+            if not line_text:
+                continue  # skip empty lines entirely
+
+            if first:
+                # First line → add as text of the <div>, not an <lb/>
+                div.text = line_text
+                first = False
+            else:
+                # Following lines → add <lb/> with text
+                lb = etree.SubElement(div, "lb")
+                lb.tail = " " + line_text
         
     return tei
 
