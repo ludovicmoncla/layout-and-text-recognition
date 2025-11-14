@@ -28,7 +28,7 @@ def process_document(model_path, image_path):
             ordered_blocks (list): Block coordinates sorted by reading order.
             ocr_texts (list): Individual OCR results for each block.
     """
-    
+
     device = ('cuda' if torch.cuda.is_available() 
               else 'mps' if torch.backends.mps.is_available() 
               else 'cpu')
@@ -51,4 +51,4 @@ def process_document(model_path, image_path):
     # 6. Fusion texte complet
     full_text = "\n\n".join(ocr_texts)
 
-    return full_text, ordered_blocks, ocr_texts
+    return full_text, ordered_blocks, ocr_texts, det_result
