@@ -1,8 +1,7 @@
 import torch
 from .doclayout import load_model, run_detection, extract_text_blocks
-from .utils import sort_blocks_two_columns
+from .utils import sort_blocks_two_columns, ocr_texts_to_tei
 from .tesseract import run_ocr_on_blocks
-
 
 
 def process_document(model_path, image_path):
@@ -37,10 +36,10 @@ def process_document(model_path, image_path):
     model = load_model(model_path, device)
 
     # 2. Détection
-    det_result = run_detection(model, image_path, device)
+    layout = run_detection(model, image_path, device)
 
     # 3. Extraction blocs texte
-    blocks = extract_text_blocks(det_result)
+    blocks = extract_text_blocks(layout)
 
     # 4. Tri en ordre de lecture
     ordered_blocks = sort_blocks_two_columns(blocks)
@@ -49,6 +48,9 @@ def process_document(model_path, image_path):
     ocr_texts = run_ocr_on_blocks(image_path, ordered_blocks)
 
     # 6. Fusion texte complet
-    full_text = "\n\n".join(ocr_texts)
+    raw_ordered_text = "\n\n".join(ocr_texts)
 
-    return full_text, ordered_blocks, ocr_texts, det_result
+    # 7. Conversion en TEI
+    tei_content = ocr_texts_to_tei(ocr_texts)
+
+    return tei_content, layout, raw_ordered_text
