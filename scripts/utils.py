@@ -1,5 +1,5 @@
 import numpy as np
-
+from lxml import etree
 
 def sort_blocks_two_columns(text_blocks):
     """
@@ -41,3 +41,39 @@ def sort_blocks_two_columns(text_blocks):
 
     # Fusion
     return left_sorted + right_sorted
+
+
+def ocr_texts_to_tei(ocr_texts):
+    """
+    Convert OCR results a simple XML-TEI format.
+
+    Args:
+        ocr_texts (list[str]): OCR text for each block.
+
+    Returns:
+        str: XML string representing the OCR results with coordinates.
+    """
+   
+    NS_TEI = "http://www.tei-c.org/ns/1.0"
+    tei = etree.Element("{%s}TEI" % NS_TEI, nsmap={None: NS_TEI})
+    text = etree.SubElement(tei, "text")
+    body = etree.SubElement(text, "body")
+
+    for content in ocr_texts:
+        div = etree.SubElement(body, "div")
+
+        content_lines = content.split("\n")
+        for line_text in content_lines:
+            lb = etree.SubElement(div, "lb")
+            lb.tail = " " + " ".join(line_text) if line_text else ""
+        
+    return tei
+
+
+def display_tei(tei):
+    print(etree.tostring(tei, pretty_print=True, encoding="UTF-8", xml_declaration=True).decode("utf-8"))
+
+
+def save_tei(input_content, output_path):
+    with open(output_path, "wb") as f:
+        f.write(etree.tostring(input_content, pretty_print=True, encoding="UTF-8", xml_declaration=True))
