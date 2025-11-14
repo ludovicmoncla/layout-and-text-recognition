@@ -1,7 +1,7 @@
 import torch
-from doclayout import load_model, run_detection, extract_text_blocks
-from utils import sort_blocks_two_columns
-from tesseract import run_ocr_on_blocks
+from .doclayout import load_model, run_detection, extract_text_blocks
+from .utils import sort_blocks_two_columns
+from .tesseract import run_ocr_on_blocks
 
 
 
