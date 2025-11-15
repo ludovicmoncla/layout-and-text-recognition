@@ -2,6 +2,8 @@ import numpy as np
 from lxml import etree
 import cv2
 import matplotlib.pyplot as plt
+from pdf2image import convert_from_path
+import os
 
 def sort_blocks_two_columns(text_blocks):
     """
@@ -124,3 +126,13 @@ def display_tei(tei):
 def save_tei(input_content, output_path):
     with open(output_path, "wb") as f:
         f.write(etree.tostring(input_content, pretty_print=True, encoding="UTF-8", xml_declaration=True))
+
+
+def convert_pdf_to_image(pdf_path, output_path, dpi=300, format="jpg"):
+
+    pages = convert_from_path(pdf_path, dpi=dpi)
+    base_name = os.path.splitext(os.path.basename(pdf_path))[0]
+
+    for i, page in enumerate(pages):
+        out_path = os.path.join(output_path, f"{base_name}_{i}.jpg")
+        page.save(out_path, format, quality=90)
