@@ -4,7 +4,7 @@ from .utils import sort_blocks_two_columns, ocr_texts_to_tei
 from .tesseract import run_ocr_on_blocks
 
 
-def process_document(model_path, image_path):
+def process_document(model_path, image_path, conf=0.3):
     """
     Complete pipeline to extract text from a document image using
     DocLayout-YOLO for layout detection and Tesseract for OCR.
@@ -36,7 +36,7 @@ def process_document(model_path, image_path):
     model = load_model(model_path, device)
 
     # 2. Détection
-    layout = run_detection(model, image_path, device)
+    layout = run_detection(model, image_path, device, conf=conf)
 
     # 3. Extraction blocs texte
     blocks = extract_text_blocks(layout)
