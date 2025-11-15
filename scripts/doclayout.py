@@ -17,7 +17,7 @@ def load_model(model_path, device):
     return model
 
 
-def run_detection(model, image_path, device, imgsz=1280, conf=0.2):
+def run_detection(model, image_path, device, imgsz=1280, conf=0.3):
     """
     Run document layout detection on an image.
 
