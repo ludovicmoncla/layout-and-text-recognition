@@ -1,5 +1,5 @@
 from doclayout_yolo import YOLOv10
-
+import cv2
 
 def load_model(model_path, device):
     """
@@ -17,13 +17,13 @@ def load_model(model_path, device):
     return model
 
 
-def run_detection(model, image_path, device, imgsz=1280, conf=0.3):
+def run_detection(model, img, device, imgsz=1280, conf=0.3):
     """
     Run document layout detection on an image.
 
     Args:
         model (YOLOv10): Loaded DocLayout-YOLO model.
-        image_path (str): Path to the document image.
+        img (np.ndarray): Preprocessed image array.
         device (str): Device used for model inference.
         imgsz (int): Input image size used for prediction. Larger = more accurate.
         conf (float): Minimum confidence threshold for detections.
@@ -31,8 +31,13 @@ def run_detection(model, image_path, device, imgsz=1280, conf=0.3):
     Returns:
         Results: YOLO detection results containing boxes, classes, and scores.
     """
+    # Save temporarily because YOLOv10 expects a path or PIL
+    temp_path = "/tmp/preprocessed_layout.png"
+    cv2.imwrite(temp_path, img)
+
+
     det_res = model.predict(
-        image_path,
+        temp_path,
         imgsz=imgsz,
         conf=conf,
         device=device,
