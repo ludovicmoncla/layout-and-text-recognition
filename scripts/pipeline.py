@@ -1,15 +1,17 @@
 import torch
+from .preprocess import preprocess
 from .doclayout import load_model, run_detection, extract_text_blocks
 from .utils import sort_blocks_two_columns, ocr_texts_to_tei
 from .tesseract import run_ocr_on_blocks
 
 
-def process_document(model_path, image_path, conf=0.3):
+def process_document(model_path, image_path, conf=0.2):
     """
     Complete pipeline to extract text from a document image using
     DocLayout-YOLO for layout detection and Tesseract for OCR.
 
     Pipeline steps:
+        0. Preprocess image for layout detection and OCR (dewarp, deskew, normalize, CLAHE)
         1. Load DocLayout-YOLO model.
         2. Run layout detection on the input image.
         3. Extract plain text blocks from detected regions.
@@ -32,11 +34,15 @@ def process_document(model_path, image_path, conf=0.3):
               else 'mps' if torch.backends.mps.is_available() 
               else 'cpu')
 
+    # 0. Preprocess image for layout detection and OCR (dewarp, deskew, normalize, CLAHE)
+    img_layout, img_ocr = preprocess(image_path)
+    #img_preprocessed = preprocess_document(image_path)
+
     # 1. Charger modèle
     model = load_model(model_path, device)
 
     # 2. Détection
-    layout = run_detection(model, image_path, device, conf=conf)
+    layout = run_detection(model, img_layout, device, conf=conf)
 
     # 3. Extraction blocs texte
     blocks = extract_text_blocks(layout)
@@ -45,7 +51,7 @@ def process_document(model_path, image_path, conf=0.3):
     ordered_blocks = sort_blocks_two_columns(blocks)
 
     # 5. OCR Tesseract
-    ocr_texts = run_ocr_on_blocks(image_path, ordered_blocks)
+    ocr_texts = run_ocr_on_blocks(img_ocr, ordered_blocks)
 
     # 6. Fusion texte complet
     raw_ordered_text = "\n\n".join(ocr_texts)
