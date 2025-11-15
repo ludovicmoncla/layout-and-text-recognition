@@ -1,31 +1,26 @@
 import pytesseract
-import cv2
 from PIL import Image
 
 
-def run_ocr_on_blocks(image_path, ordered_blocks):
+def run_ocr_on_blocks(img_ocr, ordered_blocks):
     """
     Apply Tesseract OCR on each ordered text block extracted from the document.
 
     Args:
-        image_path (str): Path to the original (unresized) document image.
+        img_ocr (np.ndarray): sauvola-binarized grayscale image
         ordered_blocks (list[dict]): List of sorted blocks with bounding boxes.
 
     Returns:
         list[str]: OCR output for each block, in reading order.
     """
-    
-    img = cv2.imread(image_path)
-    ocr_outputs = []
+    ocr_texts = []
 
     for b in ordered_blocks:
         x1, y1, x2, y2 = b["box"]
+        crop = img_ocr[y1:y2, x1:x2]
 
-        crop = img[y1:y2, x1:x2]
-        crop_rgb = cv2.cvtColor(crop, cv2.COLOR_BGR2RGB)
-        pil_crop = Image.fromarray(crop_rgb)
+        pil = Image.fromarray(crop)
+        text = pytesseract.image_to_string(pil, lang="fra")
+        ocr_texts.append(text.strip())
 
-        text = pytesseract.image_to_string(pil_crop, lang="fra")
-        ocr_outputs.append(text.strip())
-
-    return ocr_outputs
+    return ocr_texts
