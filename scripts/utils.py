@@ -65,16 +65,16 @@ def sort_blocks_two_columns(text_blocks):
     return left_sorted + right_sorted
 
 
-def display_layout(det_result, line_width=10, font_size=50, figsize=(16, 16)):
-    img_rgb = cv2.cvtColor(det_result.plot(pil=True, line_width=line_width, font_size=font_size), cv2.COLOR_BGR2RGB)
+def display_layout(layout, line_width=10, font_size=50, figsize=(16, 16)):
+    img_rgb = cv2.cvtColor(layout.plot(pil=True, line_width=line_width, font_size=font_size), cv2.COLOR_BGR2RGB)
     plt.figure(figsize=figsize)
     plt.imshow(img_rgb)
     plt.axis('off')
     plt.show()
 
 
-def save_layout(annotated_frame, output_path):
-    cv2.imwrite(output_path, annotated_frame)
+def save_layout(layout, output_path, line_width=10, font_size=50):
+    cv2.imwrite(output_path, layout.plot(pil=True, line_width=line_width, font_size=font_size))
 
 
 def ocr_texts_to_tei(ocr_texts):
