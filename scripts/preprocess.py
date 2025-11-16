@@ -127,6 +127,7 @@ def deskew_opencv(img):
                           borderMode=cv2.BORDER_REPLICATE)
 
 
+
 def preprocess_for_layout(img):
     """
     Optimal preprocessing for DocLayout-YOLO.
@@ -158,14 +159,14 @@ def preprocess_for_layout(img):
     gray = cv2.cvtColor(wb, cv2.COLOR_BGR2GRAY)
 
     # STEP 6 — Gentle brightening
-    gray = brighten(gray, gamma=1.2)
+    #gray = brighten(gray, gamma=1.2)
 
     # STEP 7 — CLAHE
     clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(16, 16))
     enhanced = clahe.apply(gray)
 
     # STEP 8 — Light smoothing
-    enhanced = cv2.medianBlur(enhanced, 3)
+    #enhanced = cv2.medianBlur(enhanced, 3)
 
     # STEP 9 — Optional: light denoise
     enhanced = cv2.fastNlMeansDenoising(enhanced, None, 3, 7, 21)
